@@ -1,0 +1,27 @@
+name: supabase-keepalive
+
+# Supabase free projesi 7 gun boyunca hicbir API istegi almazsa duraklar.
+# Bu is her gun bir kez REST uc noktasina ping atarak sayaci sifirlar.
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Her gun 06:00 UTC (TSI 09:00)
+  workflow_dispatch: # Actions sekmesinden elle calistirma icin
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supabase REST ping
+        shell: bash
+        env:
+          SB_URL: https://rrrprcvmtahetcrtucev.supabase.co
+          SB_KEY: ${{ secrets.SB_ANON_KEY }}
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: $SB_KEY" \
+            "$SB_URL/rest/v1/")
+          echo "HTTP yanit: $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::Ping beklenmedik yanit verdi ($code). Anahtari kontrol edin."
+          fi
