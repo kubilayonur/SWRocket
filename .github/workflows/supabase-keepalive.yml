@@ -20,7 +20,7 @@ jobs:
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "apikey: $SB_KEY" \
-            "$SB_URL/rest/v1/")
+            "$SB_URL/auth/v1/health")
           echo "HTTP yanit: $code"
           if [ "$code" != "200" ]; then
             echo "::warning::Ping beklenmedik yanit verdi ($code). Anahtari kontrol edin."
