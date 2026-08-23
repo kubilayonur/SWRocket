@@ -1,27 +1,61 @@
 name: supabase-keepalive
 
-# Supabase free projesi 7 gun boyunca hicbir API istegi almazsa duraklar.
-# Bu is her gun bir kez REST uc noktasina ping atarak sayaci sifirlar.
-
 on:
   schedule:
-    - cron: "0 6 * * *" # Her gun 06:00 UTC (TSI 09:00)
-  workflow_dispatch: # Actions sekmesinden elle calistirma icin
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-keepalive
+  cancel-in-progress: false
 
 jobs:
-  ping:
+  database-health-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     steps:
-      - name: Supabase REST ping
+      - name: SWRocket veritabanini denetle
         shell: bash
         env:
-          SB_URL: https://rrrprcvmtahetcrtucev.supabase.co
-          SB_KEY: ${{ secrets.SB_ANON_KEY }}
+          SUPABASE_URL: https://rrrprcvmtahetcrtucev.supabase.co
+          SUPABASE_ANON_KEY: ${{ secrets.SB_ANON_KEY }}
         run: |
-          code=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: $SB_KEY" \
-            "$SB_URL/auth/v1/health")
-          echo "HTTP yanit: $code"
-          if [ "$code" != "200" ]; then
-            echo "::warning::Ping beklenmedik yanit verdi ($code). Anahtari kontrol edin."
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::SB_ANON_KEY GitHub secret tanimli degil."
+            exit 1
           fi
+
+          response_file="$(mktemp)"
+          trap 'rm -f "$response_file"' EXIT
+
+          for attempt in 1 2 3; do
+            http_status="$(curl --silent --show-error \
+              --connect-timeout 15 \
+              --max-time 30 \
+              --output "$response_file" \
+              --write-out "%{http_code}" \
+              --request POST \
+              --header "apikey: ${SUPABASE_ANON_KEY}" \
+              --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+              --header "Content-Type: application/json" \
+              --data '{}' \
+              "${SUPABASE_URL}/rest/v1/rpc/swrocket_keepalive" || true)"
+
+            if [ "$http_status" = "200" ] && grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$response_file"; then
+              echo "Supabase veritabani erisilebilir ve SWRocket keepalive dogrulandi."
+              exit 0
+            fi
+
+            echo "Deneme ${attempt}/3 basarisiz (HTTP ${http_status:-yok})."
+            if [ "$attempt" -lt 3 ]; then
+              sleep $((attempt * 5))
+            fi
+          done
+
+          echo "::error::Supabase veritabani uc denemede dogrulanamadi."
+          exit 1
