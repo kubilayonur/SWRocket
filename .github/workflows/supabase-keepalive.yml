@@ -2,7 +2,8 @@ name: supabase-keepalive
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    # UTC 00:17, 06:17, 12:17, 18:17 = Turkiye 03:17, 09:17, 15:17, 21:17
+    - cron: "17 0,6,12,18 * * *"
   workflow_dispatch:
 
 permissions:
