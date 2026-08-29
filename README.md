@@ -10,4 +10,3 @@ En güncel ve doğrulanmış kurulum paketini [Sürümler](https://github.com/ku
 - Ürün sayfası: https://ayense.com/ayense-works
 - Destek: https://ayense.com/destek
 
-SOLIDWORKS, Dassault Systèmes SolidWorks Corporation'ın tescilli markasıdır. Ayense Works bağımsız olarak geliştirilen bir yardımcı uygulamadır.
