@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - name: SWRocket veritabanini denetle
+      - name: Ayense Platform veritabanini denetle
         shell: bash
         env:
           SUPABASE_URL: https://rrrprcvmtahetcrtucev.supabase.co
@@ -45,10 +45,10 @@ jobs:
               --header "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
               --header "Content-Type: application/json" \
               --data '{}' \
-              "${SUPABASE_URL}/rest/v1/rpc/swrocket_keepalive" || true)"
+              "${SUPABASE_URL}/rest/v1/rpc/ayense_keepalive" || true)"
 
             if [ "$http_status" = "200" ] && grep -Eq '"ok"[[:space:]]*:[[:space:]]*true' "$response_file"; then
-              echo "Supabase veritabani erisilebilir ve SWRocket keepalive dogrulandi."
+              echo "Supabase veritabani erisilebilir ve Ayense Platform denetimi dogrulandi."
               exit 0
             fi
 
